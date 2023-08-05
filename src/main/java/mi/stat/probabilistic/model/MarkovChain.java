@@ -24,6 +24,11 @@ public class MarkovChain {
         mc.calculate();
         return mc;
     }
+    public void reset(){
+        this.dataSet.clear();
+        this.countingMatrix.clear();
+        this.probabilityMatrix.clear();
+    }
 
     private void initiateTotalCounting(){
         for (String data: this.dataSet) {
