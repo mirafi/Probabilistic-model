@@ -13,7 +13,6 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Probabilistic-model</name>
 	<description>Statistical model</description>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
