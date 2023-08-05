@@ -1,4 +1,4 @@
-package mi.stat.probabilistic.model;
+package mi.stat.model.entropy;
 
 import java.util.HashMap;
 import java.util.Map;

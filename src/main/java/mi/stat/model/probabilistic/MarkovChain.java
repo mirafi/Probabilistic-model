@@ -1,4 +1,4 @@
-package mi.stat.probabilistic.model;
+package mi.stat.model.probabilistic;
 
 import java.util.*;
 import java.util.logging.Logger;

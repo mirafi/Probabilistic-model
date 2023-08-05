@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>mi.stat</groupId>
-	<artifactId>Probabilistic-model</artifactId>
+	<artifactId>Statistical-model</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Probabilistic-model</name>
-	<description>Probabilistic models</description>
+	<description>Statistical model</description>
 
 	<dependencies>
 		<dependency>
