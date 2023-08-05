@@ -1,3 +1,3 @@
 # Entropy
 # Probabilistic-model
-  # Markov chaing
+  # Markov chain
