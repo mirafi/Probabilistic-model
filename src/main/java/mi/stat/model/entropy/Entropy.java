@@ -1,29 +1,53 @@
 package mi.stat.model.entropy;
 
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class Entropy {
 
     DataTable dataTable;
+    final static String _Global = "Global";
+    static List<String> reservedKeyWords ;
 
     //TODO group it
     // replace type by Map<String, Map<String,Values> >
     Map<String, Map<String,Values> > sValue;
     Values globalSValue;
     double globalEntropy;
+    Map<String,Map<String,Double>> informationGain;
     Map<String,Map<String,Double>> entropy;
 
     public Entropy() {
         this.sValue = new HashMap<>();
         this.entropy = new HashMap<>();
         this.globalSValue  = new Values();
+        this.informationGain = new HashMap<>();
     }
 
     public Entropy( DataTable dataTable) {
         this();
-     this.dataTable = dataTable;
+        this.dataTable = dataTable;
+    }
+
+    public void calculateInformationGainGlobal(){
+        Map<String,Double> infoMap = new HashMap<>();
+        this.informationGain.put(_Global,infoMap);
+        for(Map.Entry<String,Map<String,Double>> entry :this.entropy.entrySet()){
+            String key = entry.getKey();
+            Map<String,Double> map = entry.getValue();
+
+            double total = map.entrySet().stream().mapToDouble((e)->{
+                Values value = sValue.get(key).get(e.getKey());
+                double ratio = value.getTotal() / globalSValue.getTotal();
+                return ratio * e.getValue();
+            }).sum();
+            infoMap.putIfAbsent(key,globalEntropy - total);
+        }
+        System.out.println("Global information gain");
+        System.out.println(new TreeMap<>(this.informationGain));
     }
 
     public double getEntropy(Values v){
@@ -36,7 +60,7 @@ public class Entropy {
     }
     public void calculateEntropy(){
 
-        double globalEntropy =  getEntropy(this.globalSValue);
+        this.globalEntropy =  getEntropy(this.globalSValue);
 
         System.out.println("GlobalEntropy "+globalEntropy);
 
@@ -54,20 +78,24 @@ public class Entropy {
         System.out.println(new TreeMap<>(this.entropy));
     }
 
-    public void init(){
+    public void countResultValues(){
         for(int i =0; i<this.dataTable.rows.length;i++){
             String[] values = this.dataTable.rows[i];
+
+            String rValue =  this.dataTable.result[i];
+            if(this.dataTable.getPositiveResultName().equals(rValue)) {
+                this.globalSValue.increasePositiveValue();
+            }else if(this.dataTable.getNegativeResultName().equals(rValue)) {
+                this.globalSValue.increaseNegativeValue();
+            }
+
             for(int  j=0;j<values.length;j++){
 
-                String rValue =  this.dataTable.result[i];
+
                 String key =  this.dataTable.rows[i][j];
                 String title =  this.dataTable.titles[j];
 
-                if(this.dataTable.getPositiveResultName().equals(rValue)) {
-                    this.globalSValue.increasePositiveValue();
-                }else if(this.dataTable.getNegativeResultName().equals(rValue)) {
-                    this.globalSValue.increaseNegativeValue();
-                }
+
 
 
 
@@ -135,8 +163,9 @@ public class Entropy {
 
 
         Entropy entropy =  new Entropy(dt);
-        entropy.init();
+        entropy.countResultValues();
         entropy.calculateEntropy();
+        entropy.calculateInformationGainGlobal();
     }
 }
 class Values{
@@ -159,6 +188,10 @@ class Values{
     }
     public double getNegativeValueRatio(){
         return ( (double) this.negativeValue/(double) ( this.negativeValue + this.positiveValue )  );
+    }
+
+    public double getTotal(){
+        return  this.negativeValue  + this.positiveValue ;
     }
 
     public void setNegativeValue(int negativeValue) {
