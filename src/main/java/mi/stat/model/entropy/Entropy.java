@@ -9,6 +9,7 @@ public class Entropy {
 
     DataTable dataTable;
     final static String _Global = "Global";
+    //TODO
     static List<String> reservedKeyWords ;
 
     //TODO group it
