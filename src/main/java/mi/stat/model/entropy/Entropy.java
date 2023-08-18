@@ -1,10 +1,9 @@
 package mi.stat.model.entropy;
 
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import mi.stat.model.utils.ArrayUtils;
+
+import java.util.*;
 
 public class Entropy {
 
@@ -133,6 +132,35 @@ public class Entropy {
         return (N==0)?0:(Math.log(N) / Math.log(2));
     }
 
+    public DataTable getSubTable(String... attrValues){
+
+        List<String[]> subRows = new ArrayList<>(this.dataTable.rows.length/2);
+        List<String> result = new ArrayList<>(this.dataTable.rows.length/2);
+
+        for(int i=0;i<this.dataTable.rows.length;i++){
+
+            String[] rows = this.dataTable.rows[i];
+            if(!ArrayUtils.containsAll(rows,attrValues))continue;
+
+            String[] subSet = ArrayUtils.minus(rows,attrValues);
+
+            subRows.add(subSet);
+            result.add(this.dataTable.result[i]);
+        }
+
+        DataTable subDataTable = new DataTable(subRows.size(),
+                            this.dataTable.titles.length - attrValues.length,
+                                      this.dataTable.positiveResultName,
+                                      this.dataTable.negativeResultName);
+
+
+        for(int i=0;i<subRows.size();i++){
+            subDataTable.addValue(result.get(i),i,subRows.get(i));
+        }
+
+        return subDataTable;
+
+    }
 
 
     public void calculate(String[] rows){
@@ -161,11 +189,18 @@ public class Entropy {
         dt.addValue( "no",13,"rainy","mild" ,"high","True" );
 
 
+       // System.out.print(ArrayUtils.containsAll(dt.rows[1],"sunny","hot"));
 
-        Entropy entropy =  new Entropy(dt);
-        entropy.countResultValues();
-        entropy.calculateEntropy();
-        entropy.calculateInformationGainGlobal();
+
+           Entropy entropy =  new Entropy(dt);
+//        entropy.countResultValues();
+//        entropy.calculateEntropy();
+//        entropy.calculateInformationGainGlobal();
+
+
+       DataTable subDt =  entropy.getSubTable("sunny","cool","normal","False");
+        subDt.print();
+
     }
 }
 class Values{
@@ -259,5 +294,17 @@ class DataTable{
     }
     public String getResult(int i){
         return this.result[i];
+    }
+
+    public void print(){
+        for(int i=0;i<this.rows.length;i++){
+            String[] row = this.rows[i];
+
+            for(String v : row) {
+                System.out.print(v+" ");
+            }
+            System.out.print(result[i]);
+            System.out.println();
+        }
     }
 }
