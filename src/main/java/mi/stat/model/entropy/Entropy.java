@@ -4,11 +4,16 @@ package mi.stat.model.entropy;
 import mi.stat.model.utils.ArrayUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Entropy {
 
+    public enum Lable{
+        TITLE,VALUE
+    }
     DataTable dataTable;
-    final static String _Global = "Global";
+    final static String _ROOT_ = "_ROOT_";
+    private String parentNode;
     //TODO
     static List<String> reservedKeyWords ;
 
@@ -17,24 +22,25 @@ public class Entropy {
     Map<String, Map<String,Values> > sValue;
     Values globalSValue;
     double globalEntropy;
-    Map<String,Map<String,Double>> informationGain;
+    Map<String,Double> informationGain;
     Map<String,Map<String,Double>> entropy;
 
-    public Entropy() {
+    private Entropy() {
         this.sValue = new HashMap<>();
         this.entropy = new HashMap<>();
         this.globalSValue  = new Values();
         this.informationGain = new HashMap<>();
     }
 
-    public Entropy( DataTable dataTable) {
+    public Entropy(String parentNode, DataTable dataTable) {
         this();
         this.dataTable = dataTable;
+        this.parentNode = parentNode;
     }
 
-    public void calculateInformationGainGlobal(){
-        Map<String,Double> infoMap = new HashMap<>();
-        this.informationGain.put(_Global,infoMap);
+    public void calculateInformationGain(){
+
+
         for(Map.Entry<String,Map<String,Double>> entry :this.entropy.entrySet()){
             String key = entry.getKey();
             Map<String,Double> map = entry.getValue();
@@ -44,10 +50,46 @@ public class Entropy {
                 double ratio = value.getTotal() / globalSValue.getTotal();
                 return ratio * e.getValue();
             }).sum();
-            infoMap.putIfAbsent(key,globalEntropy - total);
+
+            this.informationGain.putIfAbsent(key,globalEntropy - total);
         }
-        System.out.println("Global information gain");
+        System.out.println(this.parentNode+" information gain");
         System.out.println(new TreeMap<>(this.informationGain));
+
+    }
+    public void retry(){
+        System.out.println(this.parentNode+" retry information gain");
+        LinkedHashMap<String,Double> sortedInformationGain =    this.informationGain.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+
+
+        for (Map.Entry<String,Double> mapElement : sortedInformationGain.entrySet()) {
+            List<Map<Lable,String>> titleValues = new ArrayList<>();
+
+            Map<Lable,String> map1 = new HashMap<>();
+            map1.put(Lable.TITLE,mapElement.getKey());
+            map1.put(Lable.VALUE,"sunny");
+            System.out.println(mapElement);
+        }
+
+
+
+
+
+
+//        titleValues.add(map1);
+//
+//        DataTable subDt =  entropy.getSubTable(entropy.dataTable,titleValues);
+//        subDt.print();
+//
+//        Entropy entropy1 =  new Entropy("outlook",subDt);
+//
+//        entropy1.countResultValues();
+//        entropy1.calculateEntropy();
+//        entropy1.calculateInformationGain();
+
     }
 
     public double getEntropy(Values v){
@@ -62,7 +104,7 @@ public class Entropy {
 
         this.globalEntropy =  getEntropy(this.globalSValue);
 
-        System.out.println("GlobalEntropy "+globalEntropy);
+        System.out.println("Global Entropy "+globalEntropy);
 
 
         for(Map.Entry<String,Map<String,Values>> entryMap : this.sValue.entrySet()){
@@ -133,27 +175,34 @@ public class Entropy {
         return (N==0)?0:(Math.log(N) / Math.log(2));
     }
 
-    public DataTable getSubTable(String... attrValues){
+    public static DataTable getSubTable(DataTable dataTable,List<Map<Lable,String>> titleValues){
 
-        List<String[]> subRows = new ArrayList<>(this.dataTable.rows.length/2);
-        List<String> result = new ArrayList<>(this.dataTable.rows.length/2);
+        String[] titles = titleValues.stream().map(map->map.get(Lable.TITLE)).toArray(String[]::new);
+        String[] attrValues = titleValues.stream().map(map->map.get(Lable.VALUE)).toArray(String[]::new);
 
-        for(int i=0;i<this.dataTable.rows.length;i++){
+        List<String[]> subRows = new ArrayList<>(dataTable.rows.length/2);
+        List<String> result = new ArrayList<>(dataTable.rows.length/2);
+        String[] newTitle = ArrayUtils.minus(dataTable.titles,titles);
 
-            String[] rows = this.dataTable.rows[i];
+
+        for(int i=0;i<dataTable.rows.length;i++){
+
+            String[] rows = dataTable.rows[i];
+
             if(!ArrayUtils.containsAll(rows,attrValues))continue;
 
             String[] subSet = ArrayUtils.minus(rows,attrValues);
 
             subRows.add(subSet);
-            result.add(this.dataTable.result[i]);
+            result.add(dataTable.result[i]);
         }
 
         DataTable subDataTable = new DataTable(subRows.size(),
-                            this.dataTable.titles.length - attrValues.length,
-                                      this.dataTable.positiveResultName,
-                                      this.dataTable.negativeResultName);
+                                        dataTable.titles.length - attrValues.length,
+                                                dataTable.positiveResultName,
+                                                dataTable.negativeResultName);
 
+        subDataTable.addTitleValue(newTitle);
 
         for(int i=0;i<subRows.size();i++){
             subDataTable.addValue(result.get(i),i,subRows.get(i));
@@ -193,14 +242,12 @@ public class Entropy {
        // System.out.print(ArrayUtils.containsAll(dt.rows[1],"sunny","hot"));
 
 
-           Entropy entropy =  new Entropy(dt);
-//        entropy.countResultValues();
-//        entropy.calculateEntropy();
-//        entropy.calculateInformationGainGlobal();
+        Entropy entropy =  new Entropy(_ROOT_,dt);
+        entropy.countResultValues();
+        entropy.calculateEntropy();
+        entropy.calculateInformationGain();
 
 
-       DataTable subDt =  entropy.getSubTable("sunny","cool","normal","False");
-        subDt.print();
 
     }
 }
@@ -309,3 +356,4 @@ class DataTable{
         }
     }
 }
+
