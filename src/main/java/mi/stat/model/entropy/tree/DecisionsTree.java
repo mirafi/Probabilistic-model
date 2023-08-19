@@ -1,5 +1,7 @@
 package mi.stat.model.entropy.tree;
 
+import mi.stat.model.utils.TreeHelper;
+
 import java.util.List;
 
 public class DecisionsTree {
@@ -37,13 +39,10 @@ public class DecisionsTree {
         return null;
     }
     public Node findNode(Node start,String value){
-        Edge edge =  findEdges(start,value);
+        Edge edge =  TreeHelper.findEdges(start,value);
 
 
         return (edge!=null)?edge.getNode():null;
-    }
-    public Edge findEdges(Node start,String value){
-        return  start.getEdges().stream().filter(edg->value.equals(edg.value)).findFirst().orElse(null);
     }
 
     @Override
@@ -56,13 +55,13 @@ public class DecisionsTree {
         this.print("root",this.root);
     }
     public void print(String parentTitle , Node node){
-        parentTitle+= " ->  "+node.getTitle();
+        parentTitle+= (node.getTitle()!=null)?" ->  "+node.getTitle():"";
 
-        if(node.getEdges().isEmpty())System.out.println(parentTitle );
+        if(node.getGoalValue()!=null)
+            System.out.println(parentTitle +" G "+node.getGoalValue() );
 
         for (Edge edge :node.getEdges()) {
-            System.out.println(parentTitle +" -> "+edge.getValue() + " " + node.getGoalValue());
-            this.print(parentTitle,edge.getNode());
+            this.print(parentTitle+" ("+edge.getValue()+") ",edge.getNode());
         }
     }
 

@@ -7,7 +7,6 @@ import mi.stat.model.utils.EntropyUtils;
 import mi.stat.model.utils.TreeHelper;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Entropy {
 
@@ -61,76 +60,72 @@ public class Entropy {
         System.out.println(new TreeMap<>(this.informationGain));
 
     }
-
-    public Node buildTree() {
+    void print(Node localRoot){
+        System.out.println("**************************************************");
+        System.out.println(localRoot);
+        System.out.println();
+        DecisionsTree decisionsTree = new DecisionsTree();
+        decisionsTree.setRoot(localRoot);
+        System.out.println();
+        decisionsTree.print();
+        System.out.println("**************************************************");
+    }
+    public Node buildTreeWithTopInformationGainAttribute() {
         System.out.println(this.parentNode + " buildTree");
-        LinkedHashMap<String, Double> sortedInformationGain = this.informationGain.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+        Map.Entry<String, Double> mapElement = this.informationGain.entrySet().stream()
+                .max(Comparator.comparingDouble(Map.Entry::getValue)).get();
 
-        Node localRoot = null;
+        String nextParentTitle = mapElement.getKey();
 
-        for (Map.Entry<String, Double> mapElement : sortedInformationGain.entrySet()) {
-            String nextParentTitle = mapElement.getKey();
+        Node localRoot = TreeHelper.makeNode(nextParentTitle);
 
-            Map<String, Result> sValuesMap = this.sValue.get(nextParentTitle);
+        Map<String, Result> sValuesMap = this.sValue.get(nextParentTitle);
 
 
-            for (Map.Entry<String, Result> entry : sValuesMap.entrySet()) {
-                String value = entry.getKey();
-                Result result = entry.getValue();
+        for (Map.Entry<String, Result> entry : sValuesMap.entrySet()) {
+            String value = entry.getKey();
+            Result result = entry.getValue();
+            TreeHelper.addEdge(localRoot,value);
 
-                if(result.doesItGiveOnlyOneResult() ){
-                    String resultName = result.getResultName(this.dataTable.getPositiveResultName(),this.dataTable.getNegativeResultName()) ;
-                    Node node  = TreeHelper.makeNodeWithGoalNode(nextParentTitle, entry.getKey(), resultName);
+            if (result.doesItGiveOnlyOneResult()) {
+                String resultName = result.getResultName(this.dataTable.getPositiveResultName(), this.dataTable.getNegativeResultName());
+                Node node = TreeHelper.makeGoalNode(nextParentTitle, resultName);
 
-                    if(localRoot==null){
-                        localRoot = node;
-                        continue;
-                    }
-                    TreeHelper.connectNode(localRoot,value,node);
-
-                    continue;
-                }
-
-
-
-                List<Map<Entropy.Lable,String>> titleValues = new ArrayList<>();
-                Map<Entropy.Lable,String> map = new HashMap<>();
-
-                map.put(Lable.TITLE,nextParentTitle);
-                map.put(Lable.VALUE,value);
-
-                titleValues.add(map);
-
-                DataTable dataTable =  EntropyUtils.getSubTable(this.dataTable,titleValues);
-                System.out.println("**************************************************");
-                System.out.println("TITLE "+nextParentTitle+" value " +value);
-
-
-                dataTable.print();
-
-                Entropy entropy = new Entropy(nextParentTitle,dataTable);
-
-                entropy.init();
-
-                Node subChildRootNode =  entropy.buildTree();
-
-                if(localRoot==null) {
-                    localRoot = subChildRootNode;
-                    continue;
-                }
-
-                TreeHelper.connectNode(localRoot,value,subChildRootNode);
-
+                TreeHelper.connectNodeWithEdgeByValue(localRoot, value, node);
+                //print(localRoot);
+                continue;
             }
 
 
+            List<Map<Entropy.Lable, String>> titleValues = new ArrayList<>();
+            Map<Entropy.Lable, String> map = new HashMap<>();
+
+            map.put(Lable.TITLE, nextParentTitle);
+            map.put(Lable.VALUE, value);
+
+            titleValues.add(map);
+
+            DataTable dataTable = EntropyUtils.getSubTable(this.dataTable, titleValues);
+            System.out.println();
+            System.out.println("TITLE " + nextParentTitle + " value " + value);
+
+
+            dataTable.print();
+
+            Entropy entropy = new Entropy(nextParentTitle, dataTable);
+
+            entropy.init();
+
+            Node subChildRootNode = entropy.buildTreeWithTopInformationGainAttribute();
+
+            TreeHelper.connectNodeWithEdgeByValue(localRoot, value, subChildRootNode);
+           // print(localRoot);
         }
 
-        System.out.println(localRoot);
-        System.out.println();
+
+
+
+
 //        titleValues.add(map1);
 //
 //        DataTable subDt =  entropy.getSubTable(entropy.dataTable,titleValues);
@@ -235,6 +230,24 @@ public class Entropy {
     }
 
     public static void main(String[] args) {
+        DataTable dt = dataSetPayTennis();
+        dt.print();
+
+        // System.out.print(ArrayUtils.containsAll(dt.rows[1],"sunny","hot"));
+
+
+        Entropy entropy = new Entropy(_ROOT_, dt);
+        entropy.init();
+       Node root =  entropy.buildTreeWithTopInformationGainAttribute();
+        DecisionsTree decisionsTree = new DecisionsTree();
+        decisionsTree.setRoot(root);
+        System.out.println();
+        System.out.println("FINAL TREE");
+        decisionsTree.print();
+
+    }
+
+    private static DataTable dataSetPayTennis(){
         DataTable dt = new DataTable(14, 4, "yes", "no");
 
 
@@ -255,18 +268,7 @@ public class Entropy {
         dt.addValue("yes", 12, "overcast", "hot", "normal", "False");
         dt.addValue("no", 13, "rainy", "mild", "high", "True");
 
-
-        // System.out.print(ArrayUtils.containsAll(dt.rows[1],"sunny","hot"));
-
-
-        Entropy entropy = new Entropy(_ROOT_, dt);
-        entropy.init();
-       Node root =  entropy.buildTree();
-        DecisionsTree decisionsTree = new DecisionsTree();
-        decisionsTree.setRoot(root);
-        System.out.println();
-        System.out.println("FINAL TREE");
-        decisionsTree.print();
+        return dt;
 
     }
 }
