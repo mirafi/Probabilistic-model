@@ -1,7 +1,6 @@
 package mi.stat.model.utils;
 
 import mi.stat.model.entropy.core.DataTable;
-import mi.stat.model.entropy.core.Entropy;
 
 import java.util.ArrayList;
 import java.util.Comparator;
