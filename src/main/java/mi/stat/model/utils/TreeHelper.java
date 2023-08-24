@@ -23,6 +23,16 @@ public class TreeHelper {
         return node;
     }
 
+    public static Node createGoalNodeAndConnect(Node root,String resultName,String value){
+        Node node = TreeHelper.makeGoalNode(root.getTitle(), resultName);
+        return TreeHelper.createEdgeAndConnectNodeByValue(root, value, node);
+    }
+
+    public static Node createEdgeAndConnectNodeByValue(Node node , String value , Node childNode ){
+        TreeHelper.addEdge(node,value);
+        return  connectNodeWithEdgeByValue( node ,  value , childNode );
+    }
+
     public static Node connectNodeWithEdgeByValue(Node node , String value , Node childNode ){
         Edge edge = findEdges(node,value);
 

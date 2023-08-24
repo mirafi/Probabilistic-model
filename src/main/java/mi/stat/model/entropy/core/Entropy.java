@@ -7,6 +7,7 @@ import mi.stat.model.utils.EntropyUtils;
 import mi.stat.model.utils.TreeHelper;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Entropy {
 
@@ -70,78 +71,70 @@ public class Entropy {
         decisionsTree.print();
         System.out.println("**************************************************");
     }
-    public Node buildTreeWithTopInformationGainAttribute() {
+    private  boolean ifResultHasOnlyOneGoalThenCreateAndConnectNode(Result result, Node root, String value){
+        if(!result.doesItGiveOnlyOneResult())return false;
+
+        String resultName = this.getResultName(result);
+        TreeHelper.createGoalNodeAndConnect(root, resultName, value);
+
+        return true;
+    }
+    public Node initAndBuildTree() {
+        this.init();
+        return this.buildTree();
+    }
+    public Node buildTree() {
         System.out.println(this.parentNode + " buildTree");
-        Map.Entry<String, Double> mapElement = this.informationGain.entrySet().stream()
-                .max(Comparator.comparingDouble(Map.Entry::getValue)).get();
+        Map.Entry<String, Double> mapElement = EntropyUtils.getMaxNode(this.informationGain);
 
-        String nextParentTitle = mapElement.getKey();
+        if(mapElement==null){return null;}
 
-        Node localRoot = TreeHelper.makeNode(nextParentTitle);
+        Node root = TreeHelper.makeNode(mapElement.getKey());
+        Map<String, Result> rootAttributeValue = this.sValue.get(root.getTitle());
 
-        Map<String, Result> sValuesMap = this.sValue.get(nextParentTitle);
-
-
-        for (Map.Entry<String, Result> entry : sValuesMap.entrySet()) {
-            String value = entry.getKey();
+        for (Map.Entry<String, Result> entry : rootAttributeValue.entrySet()) {
+            String attributeValue = entry.getKey();
             Result result = entry.getValue();
-            TreeHelper.addEdge(localRoot,value);
 
-            if (result.doesItGiveOnlyOneResult()) {
-                String resultName = result.getResultName(this.dataTable.getPositiveResultName(), this.dataTable.getNegativeResultName());
-                Node node = TreeHelper.makeGoalNode(nextParentTitle, resultName);
+            boolean isNodeCreated = ifResultHasOnlyOneGoalThenCreateAndConnectNode(result, root, attributeValue);
+            if (isNodeCreated) continue;
 
-                TreeHelper.connectNodeWithEdgeByValue(localRoot, value, node);
-                //print(localRoot);
-                continue;
-            }
+            /**
+             * Break down tree to find next attribute in-search of Goal
+             * */
 
+            Node childRootNode = this.buildChildTree(this.dataTable,root,attributeValue);
+            connectSubChildRootNode( root,  attributeValue,  childRootNode);
 
-            List<Map<Entropy.Lable, String>> titleValues = new ArrayList<>();
-            Map<Entropy.Lable, String> map = new HashMap<>();
-
-            map.put(Lable.TITLE, nextParentTitle);
-            map.put(Lable.VALUE, value);
-
-            titleValues.add(map);
-
-            DataTable dataTable = EntropyUtils.getSubTable(this.dataTable, titleValues);
-            System.out.println();
-            System.out.println("TITLE " + nextParentTitle + " value " + value);
-
-
-            dataTable.print();
-
-            Entropy entropy = new Entropy(nextParentTitle, dataTable);
-
-            entropy.init();
-
-            Node subChildRootNode = entropy.buildTreeWithTopInformationGainAttribute();
-
-            TreeHelper.connectNodeWithEdgeByValue(localRoot, value, subChildRootNode);
-           // print(localRoot);
+           // print(root);
         }
 
-
-
-
-
-//        titleValues.add(map1);
-//
-//        DataTable subDt =  entropy.getSubTable(entropy.dataTable,titleValues);
-//        subDt.print();
-//
-//        Entropy entropy1 =  new Entropy("outlook",subDt);
-//
-//        entropy1.countResultValues();
-//        entropy1.calculateEntropy();
-//        entropy1.calculateInformationGain();
-
-
-        return localRoot;
+        return root;
 
     }
 
+    private Node connectSubChildRootNode(Node root, String attributeValue, Node subChildRootNode){
+        if(subChildRootNode!=null)
+            return TreeHelper.createEdgeAndConnectNodeByValue(root, attributeValue, subChildRootNode);
+        return null;
+    }
+    private Entropy getNewEntropy(DataTable dataTable, Node parent,String attributeValue){
+        DataTable subDataTable = EntropyUtils.getSubTable(dataTable, parent.getTitle(),attributeValue);
+
+        System.out.println();
+        System.out.println("TITLE " + parent.getTitle() + " value " + attributeValue);
+        // dataTable.print();
+
+        if(subDataTable==null) return null;
+
+        return new Entropy(parent.getTitle(), subDataTable);
+    }
+
+    private Node buildChildTree(DataTable dataTable, Node parent, String attributeValue){
+        Entropy entropy = this.getNewEntropy(dataTable,parent,attributeValue);
+        if(entropy == null) return null;
+        return entropy.initAndBuildTree();
+    }
     public double getEntropy(Result v) {
         double sValuePositiveRatio = v.getPositiveValueRatio();
         double sValueNegativeRatio = v.getNegativeValueRatio();
@@ -230,21 +223,31 @@ public class Entropy {
     }
 
     public static void main(String[] args) {
+
+     //   DataTable dt =  dataSetPayTennisWhile(10000000);
         DataTable dt = dataSetPayTennis();
-        dt.print();
+      //  dt.print();
 
         // System.out.print(ArrayUtils.containsAll(dt.rows[1],"sunny","hot"));
 
 
         Entropy entropy = new Entropy(_ROOT_, dt);
         entropy.init();
-       Node root =  entropy.buildTreeWithTopInformationGainAttribute();
+        Node root =  entropy.buildTree();
         DecisionsTree decisionsTree = new DecisionsTree();
         decisionsTree.setRoot(root);
         System.out.println();
         System.out.println("FINAL TREE");
         decisionsTree.print();
 
+    }
+
+    public String getResultName(Result result){
+        switch (result.getResultType()){
+            case 1  : return this.dataTable.positiveResultName ;
+            case -1  : return this.dataTable.negativeResultName ;
+            default: throw new RuntimeException();
+        }
     }
 
     private static DataTable dataSetPayTennis(){
@@ -270,5 +273,41 @@ public class Entropy {
 
         return dt;
 
+    }
+
+    private static DataTable dataSetPayTennisWhile(int n){
+        DataTable dt = new DataTable(n, 3, "yes", "no");
+
+
+        dt.addTitleValue("outlook", "temp", "humidity");
+        for(int i=0;i<n;i++) {
+            dt.addValue(getRandomR(), i, getRandomStr( 0), getRandomStr( 1), getRandomStr( 2));
+        }
+        return dt;
+
+    }
+    static String[][] data = new String[3][3];
+    static String[] dataR= new String[]{"no","yes"};
+    static {
+        data[0][0] = "sunny";
+        data[0][1] = "overcast";
+        data[0][2] = "rainy";
+
+        data[1][0] = "hot";
+        data[1][1] = "cool";
+        data[1][2] = "mild";
+
+        data[2][0] = "high";
+        data[2][1] = "normal";
+        data[2][2] = "mid";
+
+    }
+    private static String getRandomStr(int i){
+       int index =  ThreadLocalRandom.current().nextInt(0, 3);
+       return data[i][index];
+    }
+    private static String getRandomR(){
+        int index =  ThreadLocalRandom.current().nextInt(0, 2);
+        return dataR[index];
     }
 }

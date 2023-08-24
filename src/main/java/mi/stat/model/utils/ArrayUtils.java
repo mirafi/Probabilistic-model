@@ -20,4 +20,11 @@ public class ArrayUtils {
         return s1.toArray(new String[s1.size()]);
 
     }
+
+    public static String[] minus(String[] rowValues,String attrValue ){
+        List<String> s1 = new ArrayList<>(Arrays.asList(rowValues));
+        s1.remove(attrValue);
+
+        return s1.toArray(new String[s1.size()]);
+    }
 }

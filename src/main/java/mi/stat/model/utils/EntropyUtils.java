@@ -4,34 +4,34 @@ import mi.stat.model.entropy.core.DataTable;
 import mi.stat.model.entropy.core.Entropy;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 public class EntropyUtils {
-    public static DataTable getSubTable(DataTable dataTable, List<Map<Entropy.Lable,String>> titleValues){
-
-        String[] titles = titleValues.stream().map(map->map.get(Entropy.Lable.TITLE)).toArray(String[]::new);
-        String[] attrValues = titleValues.stream().map(map->map.get(Entropy.Lable.VALUE)).toArray(String[]::new);
+    public static DataTable getSubTable(DataTable dataTable, String attrTitle,String attrValue ){
 
         List<String[]> subRows = new ArrayList<>(dataTable.rows.length/2);
         List<String> result = new ArrayList<>(dataTable.rows.length/2);
-        String[] newTitle = ArrayUtils.minus(dataTable.titles,titles);
+        String[] newTitle = ArrayUtils.minus(dataTable.titles,attrTitle);
 
 
         for(int i=0;i<dataTable.rows.length;i++){
 
             String[] rows = dataTable.rows[i];
 
-            if(!ArrayUtils.containsAll(rows,attrValues))continue;
+            if(!ArrayUtils.containsAll(rows,attrValue))continue;
 
-            String[] subSet = ArrayUtils.minus(rows,attrValues);
+            String[] subSet = ArrayUtils.minus(rows,attrValue);
 
             subRows.add(subSet);
             result.add(dataTable.result[i]);
         }
 
+        if(subRows.size()==0)return null;
+
         DataTable subDataTable = new DataTable(subRows.size(),
-                dataTable.titles.length - attrValues.length,
+                dataTable.titles.length - 1,
                 dataTable.positiveResultName,
                 dataTable.negativeResultName);
 
@@ -43,5 +43,9 @@ public class EntropyUtils {
 
         return subDataTable;
 
+    }
+    public static Map.Entry<String,Double> getMaxNode(Map<String,Double> informationGain){
+        return  informationGain.entrySet().stream()
+                .max(Comparator.comparingDouble(Map.Entry::getValue)).orElse(null);
     }
 }

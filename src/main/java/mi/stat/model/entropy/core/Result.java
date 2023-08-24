@@ -62,13 +62,7 @@ public class Result {
         return hasOnlyNegativeResult() ? -1: ( hasOnlyPositiveResult() ? 1 :0 ) ;
     }
 
-    public String getResultName(String positiveResultName,String negativeResultName){
-        switch (this.getResultType()){
-            case 1  : return positiveResultName ;
-            case -1  : return negativeResultName ;
-            default: throw new RuntimeException();
-        }
-    }
+
 
     @Override
     public String toString() {
