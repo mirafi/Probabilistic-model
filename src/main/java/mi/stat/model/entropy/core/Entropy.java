@@ -6,6 +6,7 @@ import mi.stat.model.entropy.tree.Node;
 import mi.stat.model.utils.EntropyUtils;
 import mi.stat.model.utils.TreeHelper;
 
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -91,7 +92,7 @@ public class Entropy {
 
         Node root = TreeHelper.makeNode(mapElement.getKey());
         Map<String, Result> rootAttributeValue = this.sValue.get(root.getTitle());
-
+        System.out.println("NODE "+root);
         for (Map.Entry<String, Result> entry : rootAttributeValue.entrySet()) {
             String attributeValue = entry.getKey();
             Result result = entry.getValue();
@@ -118,20 +119,20 @@ public class Entropy {
             return TreeHelper.createEdgeAndConnectNodeByValue(root, attributeValue, subChildRootNode);
         return null;
     }
-    private Entropy getNewEntropy(DataTable dataTable, Node parent,String attributeValue){
-        DataTable subDataTable = EntropyUtils.getSubTable(dataTable, parent.getTitle(),attributeValue);
+    private Entropy getNewEntropy(DataTable subDataTable, Node parent,String attributeValue){
 
         System.out.println();
         System.out.println("TITLE " + parent.getTitle() + " value " + attributeValue);
-        // dataTable.print();
+
 
         if(subDataTable==null) return null;
-
+       // subDataTable.print(10);
         return new Entropy(parent.getTitle(), subDataTable);
     }
 
-    private Node buildChildTree(DataTable dataTable, Node parent, String attributeValue){
-        Entropy entropy = this.getNewEntropy(dataTable,parent,attributeValue);
+    private Node buildChildTree(DataTable parentDataTable, Node parent, String attributeValue){
+        DataTable subDataTable = EntropyUtils.getSubTable(parentDataTable, parent.getTitle(),attributeValue);
+        Entropy entropy = this.getNewEntropy(subDataTable,parent,attributeValue);
         if(entropy == null) return null;
         return entropy.initAndBuildTree();
     }
@@ -224,12 +225,14 @@ public class Entropy {
 
     public static void main(String[] args) {
 
-     //   DataTable dt =  dataSetPayTennisWhile(10000000);
-        DataTable dt = dataSetPayTennis();
+
+        DataTable dt =  dataSetPayTennisWhile(10000000);
+      //  DataTable dt = dataSetPayTennis();
       //  dt.print();
 
         // System.out.print(ArrayUtils.containsAll(dt.rows[1],"sunny","hot"));
 
+        LocalTime start = LocalTime.now();
 
         Entropy entropy = new Entropy(_ROOT_, dt);
         entropy.init();
@@ -239,6 +242,9 @@ public class Entropy {
         System.out.println();
         System.out.println("FINAL TREE");
         decisionsTree.print();
+
+        LocalTime ends = LocalTime.now();
+        System.out.println("TIME :"+(ends.getSecond() - start.getSecond()));
 
     }
 

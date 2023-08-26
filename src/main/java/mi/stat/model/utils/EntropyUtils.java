@@ -14,6 +14,7 @@ public class EntropyUtils {
         List<String> result = new ArrayList<>(dataTable.rows.length/2);
         String[] newTitle = ArrayUtils.minus(dataTable.titles,attrTitle);
 
+        if(newTitle.length==0)return null;
 
         for(int i=0;i<dataTable.rows.length;i++){
 

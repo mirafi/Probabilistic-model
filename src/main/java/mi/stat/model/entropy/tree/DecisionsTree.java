@@ -59,6 +59,8 @@ public class DecisionsTree {
 
         if(node.getGoalValue()!=null)
             System.out.println(parentTitle +" G "+node.getGoalValue() );
+        else if(node.getEdges().isEmpty())
+            System.out.println(parentTitle +" ~ "+node.getGoalValue() );
 
         for (Edge edge :node.getEdges()) {
             this.print(parentTitle+" ("+edge.getValue()+") ",edge.getNode());

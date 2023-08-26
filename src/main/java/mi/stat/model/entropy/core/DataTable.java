@@ -56,19 +56,29 @@ public class DataTable {
     }
 
     public void print() {
-        System.out.println();
+       print(this.rows.length);
+    }
+
+    public void print(int limit) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("\n");
         for(String title:titles){
-            System.out.print(title+" ");
+            stringBuilder.append(title+" ");
         }
-        System.out.println();
-        for (int i = 0; i < this.rows.length; i++) {
+        stringBuilder.append("\n");
+        for (int i = 0; i < this.rows.length && i<limit ; i++) {
             String[] row = this.rows[i];
 
             for (String v : row) {
-                System.out.print(v + " ");
+                stringBuilder.append(v + " ");
             }
-            System.out.print(result[i]);
-            System.out.println();
+            stringBuilder.append(result[i]);
+            stringBuilder.append("\n");
         }
+        if(limit<this.rows.length){
+            stringBuilder.append(" . \n . \n . \n n="+this.rows.length+" \n ");
+        }
+        System.out.println(stringBuilder);
     }
+
 }
