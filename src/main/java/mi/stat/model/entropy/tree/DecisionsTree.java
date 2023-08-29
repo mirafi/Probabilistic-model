@@ -7,12 +7,12 @@ import java.util.List;
 public class DecisionsTree {
     Node root;
 
-    public Node getRoot(){
-        return root;
+    public DecisionsTree(Node root) {
+        this.root = root;
     }
 
-    public void setRoot(Node root) {
-        this.root = root;
+    public Node getRoot(){
+        return root;
     }
 
     public Node traverse(Node node, List<Entity> entities){

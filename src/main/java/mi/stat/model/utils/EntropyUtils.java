@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class EntropyUtils {
     public static DataTable getSubTable(DataTable dataTable, String attrTitle,String attrValue ){
-
+        TimeMeasure.start("Title "+attrTitle+" value "+attrValue+" getSubTable");
         List<String[]> subRows = new ArrayList<>(dataTable.rows.length/2);
         List<String> result = new ArrayList<>(dataTable.rows.length/2);
         String[] newTitle = ArrayUtils.minus(dataTable.titles,attrTitle);
@@ -26,7 +27,7 @@ public class EntropyUtils {
 
             subRows.add(subSet);
             result.add(dataTable.result[i]);
-        }
+         }
 
         if(subRows.size()==0)return null;
 
@@ -41,6 +42,7 @@ public class EntropyUtils {
             subDataTable.addValue(result.get(i),i,subRows.get(i));
         }
 
+        TimeMeasure.end("Title "+attrTitle+" value "+attrValue+" getSubTable");
         return subDataTable;
 
     }

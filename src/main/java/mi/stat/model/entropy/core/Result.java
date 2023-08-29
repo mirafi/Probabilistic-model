@@ -1,9 +1,14 @@
 package mi.stat.model.entropy.core;
 
 
+import mi.stat.model.probabilistic.MarkovChain;
+
+import java.util.logging.Logger;
+
 public class Result {
     int positiveValue;
     int negativeValue;
+    Logger logger = Logger.getLogger(String.valueOf(Result.class));
 
     public int getPositiveValue() {
         return positiveValue;
@@ -30,7 +35,7 @@ public class Result {
     public void setNegativeValue(int negativeValue) {
         this.negativeValue = negativeValue;
     }
-    public void increasePositiveValue(){
+    public void    increasePositiveValue(){
         this.positiveValue++;
     }
 
@@ -62,7 +67,23 @@ public class Result {
         return hasOnlyNegativeResult() ? -1: ( hasOnlyPositiveResult() ? 1 :0 ) ;
     }
 
+    public void setVale(Result r){
+        this.positiveValue = r.positiveValue;
+        this.negativeValue = r.negativeValue;
+    }
 
+    public void increaseValue(String positiveResultValue,String negativeResult,String  resultValue){
+        if(positiveResultValue.equals(resultValue)){
+            this.increasePositiveValue();
+        }else if (negativeResult.equals(resultValue)){
+            this.increaseNegativeValue();
+        }else{
+
+            logger.info("Value not did not update for positiveValue "
+                                +positiveValue+" negativeValue "
+                                +negativeValue+" resultValue "+resultValue);
+        }
+    }
 
     @Override
     public String toString() {

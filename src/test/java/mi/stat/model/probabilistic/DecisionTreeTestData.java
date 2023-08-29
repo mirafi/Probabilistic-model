@@ -8,7 +8,7 @@ public class DecisionTreeTestData {
 
     public static DecisionsTree decisionTreeTestData(){
 
-        DecisionsTree dt =  new DecisionsTree();
+
 
         Node yes = new Node();
         yes.setGoalValue("yes");
@@ -17,8 +17,6 @@ public class DecisionTreeTestData {
         no.setGoalValue("no");
 
         Node outlook = new Node();
-
-        dt.setRoot(outlook);
 
         outlook.setTitle("outlook");
 
@@ -57,6 +55,6 @@ public class DecisionTreeTestData {
         humid.getEdges().add(high);
         humid.getEdges().add(normal);
 
-        return dt;
+        return new DecisionsTree(outlook);
     }
 }
