@@ -4,18 +4,18 @@ package mi.stat.model.entropy.core;
 import mi.stat.model.entropy.tree.DecisionsTree;
 import mi.stat.model.entropy.tree.Node;
 import mi.stat.model.utils.EntropyUtils;
+import mi.stat.model.utils.ExecutorUtil;
 import mi.stat.model.utils.TimeMeasure;
 import mi.stat.model.utils.TreeHelper;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.IntStream;
+import java.util.concurrent.*;
 
 import static mi.stat.model.entropy.constant.CommonConstant._ROOT_;
 
 public class Entropy {
-
+    Queue<String> subTableQueue = new LinkedList<>();
+    ExecutorService executorService = ExecutorUtil.getExecutorService();
     public enum Lable {
         TITLE, VALUE
     }
@@ -113,14 +113,67 @@ public class Entropy {
             /**
              * Break down tree to find next attribute in-search of Goal
              * */
+            subTableQueue.add(attributeValue);
 
-            Node childRootNode = this.buildChildTree(this.dataTable, root, attributeValue);
-            connectSubChildRootNode(root, attributeValue, childRootNode);
 
             // print(root);
         }
 
-        return root;
+        List<Callable< Map<String,Object>>> callableTasks = new ArrayList<>();
+
+        while(!subTableQueue.isEmpty()) {
+            final String attrValue = subTableQueue.remove();
+
+             Callable<Map<String,Object>> callable = () -> {
+
+                 DataTable subTable = EntropyUtils.getSubTable(this.dataTable, root.getTitle(), attrValue);
+
+                 Map<String,Object> map = new HashMap<>();
+                 map.put("dataTable",subTable);
+                 map.put("attrValue",attrValue);
+
+                 return map;
+             };
+
+
+
+            callableTasks.add(callable);
+        }
+
+
+
+
+
+
+
+
+        try {
+            List<Future<Map<String,Object>>>  futures =   executorService.invokeAll(callableTasks);
+            futures.parallelStream().forEach(future->{
+                String attributeValue = null;
+                try {
+                    attributeValue = (String) future.get().get("attrValue");
+                    DataTable subDataTable = (DataTable) future.get().get("dataTable");
+                    //TODO Run By Executor service again
+                    Node childRootNode = this.buildChildTree(subDataTable, root,  attributeValue);
+                    connectSubChildRootNode(root, attributeValue, childRootNode);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+
+            });
+//            for(Future<Map<String,Object>> future : futures) {
+//
+//            }
+
+
+
+            return root;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
@@ -141,11 +194,10 @@ public class Entropy {
         return new Entropy(parent.getTitle(), subDataTable);
     }
 
-    private Node buildChildTree(DataTable parentDataTable, Node parent, String attributeValue) {
-        DataTable subDataTable = EntropyUtils.getSubTable(parentDataTable, parent.getTitle(), attributeValue);
+    private Node buildChildTree(DataTable subDataTable, Node parent, String attributeValue) {
         Entropy entropy = this.getNewEntropy(subDataTable, parent, attributeValue);
         if (entropy == null) return null;
-        return entropy.initAndBuildTree();
+        return   entropy.initAndBuildTree();
     }
 
     public double getEntropy(Result v) {
@@ -265,6 +317,7 @@ public class Entropy {
 
         System.out.println();
         TimeMeasure.print();
+        entropy.executorService.shutdown();
     }
 
     public String getResultName(Result result) {

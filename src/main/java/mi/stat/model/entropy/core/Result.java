@@ -1,7 +1,6 @@
 package mi.stat.model.entropy.core;
 
 
-import mi.stat.model.probabilistic.MarkovChain;
 
 import java.util.logging.Logger;
 
