@@ -21,8 +21,8 @@ public class DecisionTreeTest {
     public void A(){
         List<Entity> entities = new ArrayList<>();
 
-        entities.add(new Entity("outlook","sunny"));
         entities.add(new Entity("humid","normal"));
+        entities.add(new Entity("outlook","sunny"));
 
         Node d = decisionTreeTestData.traverse(decisionTreeTestData.getRoot(),entities);
         assertNotNull(d);

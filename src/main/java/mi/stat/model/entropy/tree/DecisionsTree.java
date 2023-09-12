@@ -15,6 +15,10 @@ public class DecisionsTree {
         return root;
     }
 
+    public Node traverse(List<Entity> entities){
+        return traverse(this.getRoot(),  entities);
+    }
+
     public Node traverse(Node node, List<Entity> entities){
         System.out.println(node);
         while(node!=null){

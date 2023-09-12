@@ -141,12 +141,6 @@ public class Entropy {
         }
 
 
-
-
-
-
-
-
         try {
             List<Future<Map<String,Object>>>  futures =   executorService.invokeAll(callableTasks);
             futures.parallelStream().forEach(future->{
@@ -164,15 +158,14 @@ public class Entropy {
                 }
 
             });
-//            for(Future<Map<String,Object>> future : futures) {
-//
-//            }
-
-
 
             return root;
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        }finally {
+            if(_ROOT_.equals(this.parentNode)){
+                this.executorService.shutdown();
+            }
         }
 
     }
@@ -297,7 +290,7 @@ public class Entropy {
 
 
         //   DataTable dt =  dataSetPayTennisWhile(10000000);
-        DataTable dt = dataSetPayTennis(2000000); // 20000000  2000000 200000
+        DataTable dt = SampleData.dataSetPayTennis(2000000); // 20000000  2000000 200000
         //  dt.print();
 
         // System.out.print(ArrayUtils.containsAll(dt.rows[1],"sunny","hot"));
@@ -317,7 +310,7 @@ public class Entropy {
 
         System.out.println();
         TimeMeasure.print();
-        entropy.executorService.shutdown();
+
     }
 
     public String getResultName(Result result) {
@@ -327,73 +320,5 @@ public class Entropy {
             default -> throw new RuntimeException();
         };
     }
-
-
-    private static DataTable dataSetPayTennis(int n) {
-        int _DEFAULT_SIZE = 14;
-        DataTable dt = new DataTable(_DEFAULT_SIZE * n, 4, "yes", "no");
-
-        for (int i = 0; i < _DEFAULT_SIZE * n; ) {
-            dt.addTitleValue("outlook", "temp", "humidity", "windy");
-
-            dt.addValue("no", i++, "sunny", "hot", "high", "False");
-            dt.addValue("no", i++, "sunny", "hot", "high", "True");
-            dt.addValue("yes", i++, "overcast", "hot", "high", "False");
-            dt.addValue("yes", i++, "rainy", "mild", "high", "False");
-            dt.addValue("yes", i++, "rainy", "cool", "normal", "False");
-            dt.addValue("no", i++, "rainy", "cool", "normal", "True");
-            dt.addValue("yes", i++, "overcast", "cool", "normal", "True");
-            dt.addValue("no", i++, "sunny", "mild", "high", "False");
-            dt.addValue("yes", i++, "sunny", "cool", "normal", "False");
-            dt.addValue("yes", i++, "rainy", "mild", "normal", "False");
-            dt.addValue("yes", i++, "sunny", "mild", "normal", "True");
-            dt.addValue("yes", i++, "overcast", "mild", "high", "True");
-            dt.addValue("yes", i++, "overcast", "hot", "normal", "False");
-            dt.addValue("no", i++, "rainy", "mild", "high", "True");
-        }
-        return dt;
-
-    }
-
-    private static DataTable dataSetPayTennisWhile(int n) {
-        DataTable dt = new DataTable(n, 3, "yes", "no");
-
-
-        dt.addTitleValue("outlook", "temp", "humidity");
-        for (int i = 0; i < n; i++) {
-            dt.addValue(getRandomR(), i, getRandomStr(0), getRandomStr(1), getRandomStr(2));
-        }
-        return dt;
-
-    }
-
-    static String[][] data = new String[3][3];
-    static String[] dataR = new String[]{"no", "yes"};
-
-    static {
-        data[0][0] = "sunny";
-        data[0][1] = "overcast";
-        data[0][2] = "rainy";
-
-        data[1][0] = "hot";
-        data[1][1] = "cool";
-        data[1][2] = "mild";
-
-        data[2][0] = "high";
-        data[2][1] = "normal";
-        data[2][2] = "mid";
-
-    }
-
-    private static String getRandomStr(int i) {
-        int index = ThreadLocalRandom.current().nextInt(0, 3);
-        return data[i][index];
-    }
-
-    private static String getRandomR() {
-        int index = ThreadLocalRandom.current().nextInt(0, 2);
-        return dataR[index];
-    }
-
 
 }
